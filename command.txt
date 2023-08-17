@@ -1,0 +1,144 @@
+//换源
+
+conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
+conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/
+conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/menpo/
+conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/bioconda/
+conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge 
+conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/msys2/
+conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/pytorch/
+conda config --set show_channel_urls yes
+
+//恢复原来的源
+conda config --remove-key channels
+
+1、//新建conda环境
+conda create --name maskrcnn_benchmark python=3.7
+conda create --name unet python=3.6
+conda create --name maskrcnn python=3.7
+
+//清理conda缓存
+conda clean -p
+conda clean -t
+
+//删除环境
+conda remove --name new_env_name --all
+conda remove --name unet
+
+//复制环境
+conda create --name new_env_name --clone old_env_name 
+
+//导出环境
+conda env export > environment.yml
+
+//导入环境
+conda env create -f environment.yml
+
+2、//激活环境
+conda activate maskrcnn_benchmark
+conda activate maskrcnn
+
+3、//安装依赖（在激活环境下安装这些）
+conda install ipython
+conda install ninja yacs cython matplotlib tqdm opencv
+
+4、//镜像安装pytorch（首选）
+conda install pytorch=1.2 pytorch-nightly torchvision=0.2.1 cudatoolkit=10.0
+conda install pytorch==1.2.0 torchvision==0.4.0 cudatoolkit=10.0 -c pytorch
+conda install pytorch torchvision cudatoolkit=10.0
+conda install pytorch==1.3.0 torchvision==0.4.0 
+
+//官方安装pytorch
+conda install -c pytorch=1.2  pytorch-nightly torchvision=0.2.1 cudatoolkit=10.0
+conda install -c pytorch pytorch-nightly torchvision=0.2.1 cudatoolkit=10.0
+conda install -c pytorch pytorch-nightly torchvision cudatoolkit=10.0
+conda install pytorch==1.2.0 torchvision==0.4.0 cudatoolkit=10.0 -c pytorch
+conda install torchvision==0.4.0 -c pytorch
+conda install pytorch==1.8.0 torchvision==0.9.0 torchaudio==0.8.0 cudatoolkit=11.1 -c pytorch -c conda-forge
+
+
+
+5、//替换collect_env.py
+Anaconda3\envs\maskrcnn_benchmark\Lib\site-packages\torch\utils
+
+6、//编译cocoapi 
+cd cocoapi/PythonAPI
+python setup.py build_ext install
+（编译之前记得安装VS2015，打开vs后继续安装）
+
+7、//编译apex
+cd apex
+python setup.py install --cuda_ext --cpp_ext
+（记得装pytorch-nightly）
+
+//安装maskrcnn-benchmark
+cd maskrcnn-benchmark
+python setup.py build develop
+
+//测试Demo
+cd demo
+GPU
+python webcam.py --min-image-size 224
+CPU
+python webcam.py --min-image-size 224 MODEL.DEVICE cpu
+
+
+//训练
+https://blog.csdn.net/yang332233/article/details/97205123
+https://blog.csdn.net/weixin_42357472/article/details/93378834
+
+//labelme安装
+conda install labelme scikit-image
+
+instances_train2014.json
+instances_val2014.json
+
+修改e2e_mask_rcnn_R_50_FPN_1x.yaml
+修改defaults.py   _C.MODEL.ROI_BOX_HEAD.NUM_CLASSES
+修改predictor.py
+
+复制R-50.pkl
+
+../output/model_final.pth
+
+结果转好：
+python tools/train_net.py --config-file ./configs/e2e_mask_rcnn_R_50_FPN_1x.yaml SOLVER.BASE_LR 0.0001 SOLVER.MAX_ITER 2000
+
+shp:
+python tools/train_net.py --config-file ./configs/e2e_mask_rcnn_R_50_FPN_1x.yaml SOLVER.BASE_LR 0.0001 SOLVER.MAX_ITER 5000
+python tools/train_net.py --config-file ./configs/e2e_mask_rcnn_R_50_FPN_1x.yaml SOLVER.BASE_LR 0.0001 SOLVER.MAX_ITER 30000
+python tools/train_net.py --config-file ./configs/e2e_mask_rcnn_R_50_FPN_1x.yaml SOLVER.BASE_LR 0.0001 SOLVER.MAX_ITER 80000
+
+
+
+
+
+20210604
+python tools/train_net.py --config-file ./configs/e2e_mask_rcnn_R_50_FPN_1x.yaml SOLVER.BASE_LR 0.0001 SOLVER.MAX_ITER 40000
+
+20210623multi-band 
+python tools/train_net.py --config-file ./configs/e2e_mask_rcnn_R_50_FPN_1x.yaml SOLVER.BASE_LR 0.0001 SOLVER.MAX_ITER 32000
+
+
+
+//测试
+Test.py
+
+anaconda search -t conda labelme
+ conda install -c https://conda.anaconda.org/conda-forge labelme 
+
+
+// 查看json文件
+labelme_json_to_dataset <文件名>.json
+
+//查看GPU
+export NGPUS=8
+python -m torch.distributed.launch --nproc_per_node=$NGPUS /path_to_maskrcnn_benchmark/tools/test_net.py --config-file "configs/e2e_mask_rcnn_R_50_FPN_1x.yaml" TEST.IMS_PER_BATCH 16
+
+python /path_to_maskrcnn_benchmark/tools/train_net.py --config-file ./configs/e2e_mask_rcnn_R_50_FPN_1x.yaml 
+python tools/test_net.py --config-file "D:/Tutorials/Obj_Dectection/maskrcnn-benchmark/configs/e2e_mask_rcnn_R_50_FPN_1x.yaml"
+python tools/test_net.py --config-file "C:/code/Tutorials/Obj_Dectection/maskrcnn-benchmark/configs/e2e_mask_rcnn_R_50_FPN_1x.yaml"
+
+
+//tensorboard
+tensorboard --logdir=D:\Tutorials\Obj_Dectection\maskrcnn-benchmark\output\log
